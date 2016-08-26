@@ -20,37 +20,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE. 
 # 
-# Title : BMI701 Lab 1: RDB
+# Title : BMI701 Lab 1: SQL
 # Author : Wei-Hung Weng
-# Created : 08/16/2016
-# Comment : 
+# Created : 08/25/2016
+# Comment : sitka
 
+DROP DATABASE IF EXISTS sitka;
+CREATE DATABASE sitka
+DEFAULT CHARACTER SET = 'ascii' COLLATE = 'ascii_general_ci';
+USE sitka;  
 
-# List of packages for session
-.packages <- c("RMySQL", "RPostgreSQL", "sqldf")
-# Install CRAN packages (if not already installed)
-.inst <- .packages %in% installed.packages()
-if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
-# Load packages into session 
-lapply(.packages, library, character.only=TRUE)
+CREATE TABLE `sitka`.`sitka` (
+  `index` INT(3) NOT NULL COMMENT '',
+  `size` FLOAT NULL COMMENT '',
+  `date` VARCHAR(10) COMMENT '',
+  `dob` VARCHAR(10) COMMENT '',
+  `tree` INT(2) NULL COMMENT '',
+  `treat` VARCHAR(8) NULL COMMENT '',
+  PRIMARY KEY (`index`) COMMENT '');
 
+TRUNCATE TABLE sitka.sitka;
 
-# connection
-con = dbConnect(MySQL(), user="root", password="", 
-                dbname="hpo", host="127.0.0.1")
-
-dbListTables(con)
-
-dbGetQuery(con, "select * from term limit 5")
-dbGetQuery(con, "select * from term2term limit 5")
-dbGetQuery(con, "select * from term_definition limit 5")
-
-# join table
-
-# disconnection
-cons = dbListConnections(MySQL())
-for (con in cons) {dbDisconnect(con)}
-cons = dbListConnections(dbDriver("PostgreSQL"))
-for (con in cons) {dbDisconnect(con)}
-rm(con, cons)
-
+LOAD DATA LOCAL INFILE '/Users/weng/Desktop/lab5_sitka.csv' 
+INTO TABLE sitka.sitka
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES;
