@@ -167,10 +167,11 @@ confusionMatrix(iris$Species, pred)
 
 
 # database
+library(RMySQL)
 con <- dbConnect(MySQL(), user="root", password="", 
-                 dbname="gwas", host="localhost")
+                 dbname="gwas", host="localhost") # 127.0.0.1
 dbListTables(con)
-dbGetQuery(con, "select * from gwas")
+gwas <- dbGetQuery(con, "select * from gwas limit 100")
 
 cons <- dbListConnections(MySQL())
 for (con in cons) {dbDisconnect(con)}
