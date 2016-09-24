@@ -47,15 +47,15 @@ dbGetQuery(con, "select count(*) from curr_relationship_f")
 
 dbGetQuery(con, "select * from curr_concept_f limit 5")
 dbGetQuery(con, "select * from curr_description_f limit 5")
-dbGetQuery(con, "select * from curr_relationship_f limit 5")
+dbGetQuery(con, "select * from curr_relationship_f limit 10")
 
 dbGetQuery(con, "select * from curr_relationship_f where sourceid = 85898001") # relationship
 dbGetQuery(con, "select * from curr_relationship_f where destinationid = 85898001") # relationship
 
-dbGetQuery(con, "select * from curr_description_f where conceptid = 308489006") # relationship
-dbGetQuery(con, "select * from curr_description_f where conceptid = 116680003") # relationship
+dbGetQuery(con, "select * from curr_description_f where conceptid = 10392004") # relationship
+dbGetQuery(con, "select * from curr_description_f where conceptid = 47040006") # relationship
+dbGetQuery(con, "select * from curr_description_f where conceptid = 308489006")
 dbGetQuery(con, "select * from curr_description_f where conceptid = 280844000")
-dbGetQuery(con, "select * from curr_description_f where conceptid = 71737002")
 
 # join table
 query <- "
