@@ -155,7 +155,20 @@ stopCluster(cl)
 
 
 # sqldf
+library(sqldf)
+str(iris)
 sqldf("select * from iris limit 10", drv="SQLite")
+
+i1 <- iris[1:10, c(1, 5)]
+for (i in 1:10) {
+  i1$idx[i] <- i
+}
+i2 <- iris[1:10, c(2, 5)]
+for (i in 1:10) {
+  i2$idx[i] <- i
+}
+
+sqldf("select * from i1 left join i2 on i1.idx = i2.idx", drv="SQLite")
 
 # system
 system("ls -l")
