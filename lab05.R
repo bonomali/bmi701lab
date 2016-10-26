@@ -65,12 +65,12 @@ corpus <- tm_map(corpus, PlainTextDocument)
 corpus <- tm_map(corpus, removePunctuation)
 corpus <- tm_map(corpus, removeNumbers)
 corpus <- tm_map(corpus, stripWhitespace)
-corpus <- tm_map(corpus, removeWords, c(stopwords("english")))
+corpus <- tm_map(corpus, removeWords, c(stopwords("english"), "history", "apple"))
 corpus <- tm_map(corpus, stemDocument)
 
 dtm <- DocumentTermMatrix(corpus)
 # dtm <- DocumentTermMatrix(corpus,
-#                            control=list(weighting=function(x) weightTfIdf(x, normalize=TRUE),
+#                           control=list(weighting=function(x) weightTfIdf(x, normalize=TRUE),
 #                                         stopwords=TRUE))
 
 dtm <- removeSparseTerms(dtm, 0.995)
