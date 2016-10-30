@@ -1,0 +1,594 @@
+---
+title: "Data Visualization"
+author: "Wei-Hung Weng"
+date: "Nov 3, 2016"
+output: ioslides_presentation
+subtitle: "BMI701 Lab Session 7"
+highlighter: highlight.js
+---
+
+# Plotting System
+
+## Plotting Systems in R - Base
+- "Artist's palette" model
+- Start with blank canvas and build up from there
+- Start with `plot` function (or similar)
+- Use annotation functions to add/modify (`text`, `lines`, `points`, `axis`)
+
+## Plotting Systems in R - Base
+- Convenient, mirrors how we think of building plots and analyzing data
+- Can't go back once plot has started (i.e. to adjust margins); need to plan in advance
+- Difficult to 'translate' to others once a new plot has been created (no graphical 'language')
+- Plot is just a series of R commands
+
+## Plotting Systems in R - Lattice
+- Plots are created with a single function call (`xyplot`, `bwplot`, etc.)
+- Most useful for conditioning types of plots: Looking at how $y$ changes with $x$ across levels of $z$
+- Things like margins/spacing set automatically because entire plot is specified at once
+- Good for putting many many plots on a screen
+
+## Plotting Systems in R - Lattice
+- Sometimes awkward to specify an entire plot in a single function call
+- Annotation in plot is not intuitive
+- Use of panel functions and subscripts difficult to wield and requires intense preparation
+- Cannot 'add' to the plot once it's created
+
+## Plotting Systems in R - ggplot2
+- Split the difference between `base` and `lattice`
+- Automatically deals with spacings, text, titles but also allows you to annotate by adding `+`
+- Superficial similarity to lattice but generally easier/more intuitive to use
+- Default mode makes many choices for you (but you _can_ customize!)
+
+# ggplot2
+
+## What is ggplot2?
+- An implementation of `The Grammar of Graphics` by Leland Wilkinson
+- Written by `Hadley Wickham` (while he was a graduate student at Iowa State)
+- A 'third' graphics system for R (along with `base` and `lattice`)
+- [Web site](http://ggplot2.org)
+
+## What is ggplot2?
+- `Grammar of graphics` represents an abstraction of graphics ideas/objects
+- Think 'verb', 'noun', 'adjective' for graphics
+- Allows for a 'theory' of graphics on which to build new graphics and graphics objects
+
+## Grammer of Graphics (from `ggplot2` book)
+### "In brief, the grammar tells us that a statistical graphic is a `mapping` from data to `aesthetic` attributes (colour, shape, size) of `geometric` objects (points, lines, bars). The plot may also contain statistical transformations of the data and is drawn on a specific coordinate system"
+
+## Basic Components of a ggplot2 Plot (Grammar)
+- `data frame`
+- `aesthetic mappings`: how data are mapped to color, size, thickness, ...
+- `geoms`: geometric objects like points, lines, shapes
+- `facets`: for conditional plots (subgraph)
+- `stats`: statistical transformations like binning, quantiles, smoothing. 
+- `scales`: what scale an aesthetic map uses (example: male = red, female = blue)
+- `coordinate system` 
+
+## The Basics: `qplot()`
+- Works much like the `plot` function in base graphics system
+- Looks for data in a data frame, similar to lattice
+- Plots are made up of `aesthetics` (size, shape, color) and `geoms` (points, lines)
+
+## The Basics: `qplot()`
+- Factors are important for indicating subsets of the data; they should be `labeled`
+- The `qplot()` hides what goes on underneath, which is okay for most operations
+- `ggplot()` is the core function and very flexible for doing things `qplot()` cannot do
+
+## ggplot2 "Hello, world!"
+```{r, fig.height=4, warning=F, message=F}
+library(ggplot2)
+# qplot(x, y, data) -> scatter plot
+qplot(carat, price, data=diamonds)
+```
+
+## Modifying aesthetics
+```{r, fig.height=4}
+qplot(carat, price, data=diamonds, color=clarity)
+```
+
+## Adding a geom
+```{r, fig.height=4}
+# add smooth curve
+qplot(carat, price, data=diamonds, 
+      geom=c("point", "smooth")) 
+```
+
+## Histograms
+```{r, fig.height=3.5}
+qplot(price, data=diamonds, fill=cut)
+```
+
+## Facets
+```{r, fig.height=3.5}
+# facets = . ~ cut (horizontal)
+qplot(carat, price, data=diamonds, 
+      facets=.~cut)
+```
+
+## Facets
+```{r, fig.height=4}
+# facets = cut ~ . (vertical)
+qplot(carat, price, data=diamonds, 
+      facets=cut~.)
+qplot(hwy, data = mpg, facets = drv ~ ., binwidth = 2)
+```
+
+## Summary of qplot()
+- The `qplot()` function is the analog to `plot()` but with many built-in features
+- Syntax somewhere in between `base/lattice`
+- Produces very nice graphics, essentially publication ready (if you like the design)
+- Difficult to go against the grain/customize (don't bother; use full ggplot2 power in that case)
+
+## Building Plots with ggplot2
+- When building plots in ggplot2 (rather than using qplot) the "artist’s palette" model may be the closest analogy
+- Plots are built up in layers
+  - Plot the data
+  - Overlay a summary
+  - Metadata and annotation
+
+## Annotation
+- Labels: `xlab()`, `ylab()`, `labs()`, `ggtitle()`
+- Each of the `geom` functions has options to modify 
+- For things that only make sense globally, use `theme()` 
+  - Example: `theme(legend.position = "none")` 
+- Two standard appearance themes are included
+  - `theme_gray()`: The default theme (gray background)
+  - `theme_bw()`: More stark/plain 
+
+## Other themes 
+- `ggthemes` packages [Website](https://cran.r-project.org/web/packages/ggthemes/vignettes/ggthemes.html)
+- `xkcd` packages [Website](http://xkcd.r-forge.r-project.org/)
+
+## Scatter plot in ggplot2 geom_point()
+```{r, fig.height=4.5, fig.height=3}
+# aes: Aesthetic attributes, color, shape, size, thickness
+# geom_*: Geometric objects, point, line, boxplot, bar
+ggplot(diamonds, aes(x = carat, y = price)) + 
+  geom_point()
+```
+
+## Box plot in ggplot2 geom_boxplot()
+```{r, fig.height=4.5, fig.height=3}
+# aes: Aesthetic attributes, color, shape, size, thickness
+# geom_*: Geometric objects, point, line, boxplot, bar
+ggplot(diamonds, aes(x = cut, y = price)) + 
+  geom_boxplot()
+```
+
+## Faceting in ggplot2 facet_grid()
+```{r, fig.height=4.5, fig.height=3}
+# facet_grid: add subgraph
+ggplot(diamonds, aes(x = carat, y = price)) + 
+  geom_point() +
+  facet_grid(cut~.)
+```
+
+
+## Faceting in ggplot2 facet_grid()
+```{r, fig.height=4.5, fig.height=3}
+# facet_grid: add subgraph
+ggplot(diamonds, aes(x = carat, y = price)) + 
+  geom_point() +
+  facet_grid(.~cut)
+```
+
+## Regression line in ggplot2 geom_smooth()
+```{r, fig.height=4.5, fig.height=3}
+# geom_smooth: method='lm' (linear regression)
+ggplot(diamonds, aes(x = carat, y = price)) + 
+  geom_point() +
+  facet_grid(cut~.) + 
+  geom_smooth(method='lm')
+```
+
+## Color group in ggplot2 color=？
+```{r, fig.height=4.5, fig.height=3}
+# color = cut
+ggplot(diamonds, aes(x = carat, y = price, color = cut)) + 
+  geom_point() +
+  geom_smooth(method='lm')
+```
+
+## A Note about Axis Limits
+```{r, fig.height=4.5, fig.height=3}
+testdat <- data.frame(x = 1:100, y = rnorm(100))
+testdat[50, 2] <- 100  # Outlier!
+plot(testdat$x, testdat$y, type = "l", ylim = c(-3,3))
+```
+
+## A Note about Axis Limits
+```{r, fig.height=4.5, fig.height=3}
+g <- ggplot(testdat, aes(x = x, y = y))
+g + geom_line()
+```
+
+## Axis Limits
+```{r, fig.height=4.5}
+g + geom_line() + ylim(-3, 3)
+```
+
+## Axis Limits
+```{r, fig.height=4.5}
+g + geom_line() + coord_cartesian(ylim = c(-3, 3))
+```
+
+# Application
+
+## Error bar
+- Standard deviation (SD)
+- Standard error (SE)
+- Confidence interval (CI)
+    
+## Bar Chart without Error Bar in ggplot2
+```{r, fig.height=3.5}
+library(datasets)
+airquality$Month <- as.factor(airquality$Month)
+airquality.mean <- aggregate(Ozone~Month, airquality, mean)
+ggplot() + 
+  geom_bar(data=airquality.mean, aes(x=Month, y=Ozone), stat="identity")
+```
+
+## Bar Chart with Error Bar in ggplot2
+```{r, fig.height=3}
+airquality.sd <- aggregate(Ozone~Month, airquality, sd)
+airquality.eb <- merge(airquality.mean, airquality.sd, by="Month")
+ggplot(data=airquality.eb) +
+  geom_bar(aes(x=Month, y=Ozone.x), stat = "identity")+
+  geom_errorbar( # Ozone.x = mean, Ozone.y = sd
+    aes(x=Month, ymin=Ozone.x-Ozone.y, ymax=Ozone.x+Ozone.y), width=.1)
+```
+
+## `ggplot2` Reference
+- The `ggplot2` book by Hadley Wickham
+- The `R Graphics Cookbook` by Winston Chang (examples in base plots and in ggplot2)
+- [ggplot2 web site](http://ggplot2.org)
+- [ggplot2 doc](http://docs.ggplot2.org/current/)
+- [ggplot cheat sheet](https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf)
+- [r blooger](http://www.r-bloggers.com/basic-introduction-to-ggplot2/)
+
+# Map
+
+## Heatmap
+[Reference](http://flowingdata.com/2010/01/21/how-to-make-a-heatmap-a-quick-and-easy-solution/)
+```{r message=FALSE, warning=F}
+nba <- read.csv("http://datasets.flowingdata.com/ppg2008.csv")
+head(nba)
+```
+
+## Heatmap (Wide to Long)
+```{r message=FALSE, warning=F}
+library(reshape2) # for melt()
+nba.m <- melt(nba, id.vars = "Name") # wide to long based on name
+head(nba.m, 10)
+```
+
+## Heatmap geom_tile()
+```{r message=FALSE, warning=F, fig.height=4}
+library(ggplot2) # for ggplot()
+ggplot(nba.m, aes(variable, Name)) +
+    geom_tile(aes(fill = value), colour = "white") +
+    scale_fill_gradient(low = "white", high = "steelblue")
+```
+
+## Heatmap: scale
+```{r message=FALSE, warning=F, fig.height=4}
+head(nba, 2)
+nba[, 2:21] <- apply(nba[, 2:21], 2, scale) # scale, average to 0
+head(nba, 2)
+```
+
+## Heatmap: scale
+```{r message=FALSE, warning=F, fig.height=4}
+nba.m <- melt(nba)
+ggplot(nba.m, aes(variable, Name)) +
+    geom_tile(aes(fill = value),colour = "white") +
+    scale_fill_gradient(low = "white",high = "steelblue")
+```
+
+## Treemap
+- Use `treemapify` packages
+- [Reference](https://github.com/wilkox/treemapify)
+- [G20 Dataset](https://en.wikipedia.org/wiki/G-20_major_economies)
+```{r echo=F, message=FALSE, warning=F, fig.height=4}
+if (!require('treemapify')){
+    library(devtools)
+    install_github("wilkox/treemapify")
+    library(treemapify)
+}
+data(G20)
+treeMapCoordinates <- treemapify(data=G20,
+    area = "Nom.GDP.mil.USD",fill = "HDI",
+    label = "Country",group = "Region")
+ggplotify(treeMapCoordinates)+ 
+    scale_fill_gradient(low = "white",high = "steelblue")
+```
+
+## Treemap - Data Processing 
+```{r message=FALSE,warning=F,fig.height=4}
+if (!require('treemapify')){
+    library(devtools)
+    install_github("wilkox/treemapify")
+    library(treemapify)
+}
+data(G20)
+head(G20)
+```
+
+## Treemap - Parameter
+```{r message=FALSE, warning=F, fig.height=4}
+# treemapify: convert format
+# area, fill, label, group
+treeMapCoordinates <- treemapify(data=G20,
+    area = "Nom.GDP.mil.USD", fill = "HDI",
+    label = "Country", group = "Region")
+head(treeMapCoordinates)
+```
+
+## Treemap - Plotting
+```{r message=FALSE, warning=F, fig.height=4}
+ggplotify(treeMapCoordinates)
+```
+
+## Treemap - Plotting
+```{r message=FALSE, warning=F, fig.height=4}
+ggplotify(treeMapCoordinates)+ 
+    scale_fill_gradient(low = "white",high = "steelblue")
+```
+
+## Choropleth Map
+- [Choropleth map?](https://en.wikipedia.org/wiki/Choropleth_map)
+- Stat data to map
+- `choroplethr` & `choroplethrMaps` packages
+```{r, echo=F, warning=F,message=F}
+.packages <- c("choroplethr", "choroplethrMaps")
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) suppressMessages(install.packages(.packages[!.inst], repos="http://cran.rstudio.com/"))
+invisible(lapply(.packages, library, character.only=TRUE))
+
+data(df_pop_state) # population
+state_choropleth(df_pop_state) # population to map
+```
+
+## Taiwan
+- `rgdal`, `rgeos`,`maptools` packages for map files
+- `ggplot2` & `RColorBrewer` for plotting
+```{r, echo=F, warning=F,message=F, fig.height=4}
+.packages <- c("rgdal", "rgeos", "maptools", "ggplot2", "gpclib", "RColorBrewer")
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) suppressMessages(install.packages(.packages[!.inst], repos="http://cran.rstudio.com/"))
+invisible(lapply(.packages, library, character.only=TRUE))
+gpclibPermit()
+
+tw_new <- readShapeSpatial("lab07_tw/Town_MOI_1041215.shp")
+
+tw_new.df <- fortify(tw_new, region = "T_UID") # from ggplot2 package
+mydata <- data.frame(NAME_2=tw_new$T_Name, id=tw_new$T_UID,
+                     prevalence=rnorm(length(tw_new$T_UID)))
+final.plot <- merge(tw_new.df, mydata,by="id",all.x=T)
+
+twcmap<-ggplot() +
+    geom_polygon(data = final.plot, 
+                 aes(x = long, y = lat, group = group, 
+                     fill = prevalence), 
+                 color = "black", size = 0.25) + 
+    coord_map()+ # fixed scale
+    scale_fill_gradientn(colours = brewer.pal(9,"Reds"))+
+    theme_void()+
+    labs(title="Prevalence of X in Taiwan")
+twcmap
+```
+
+## Taiwan
+- Use [Taiwan open data](http://data.gov.tw/node/7441)
+- Include longitude, latitute, boundary, ...
+- `shapefile` [Wiki](https://zh.wikipedia.org/zh-tw/Shapefile)
+- Spatial data format
+- [Reference](http://www.r-bloggers.com/mapping-with-ggplot-create-a-nice-choropleth-map-in-r/)
+
+## Read `shapefile`
+- Use `maptools` package, `readShapeSpatial` function
+```{r, warning=F,message=F, fig.height=3}
+.packages <- c("rgdal", "rgeos", "maptools", "ggplot2", "gpclib", "RColorBrewer")
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) suppressMessages(install.packages(.packages[!.inst], repos="http://cran.rstudio.com/"))
+invisible(lapply(.packages, library, character.only=TRUE))
+
+tw_new <- readShapeSpatial("Taiwan/Town_MOI_1041215.shp")
+names(tw_new)
+```
+
+## Process shapefile
+- `rgdal`, `rgeos`,`maptools`
+- `fortify`: `shapefile` $\rightarrow$ `data.frame`
+- [Reference](http://www.r-bloggers.com/mapping-with-ggplot-create-a-nice-choropleth-map-in-r/)
+```{r, warning=F,message=F, fig.height=3}
+head(tw_new$Town_ID)
+tw_new.df <- fortify(tw_new, region = "T_UID") # from ggplot2 package
+```
+
+## Process shapefile
+- [Reference](http://www.r-bloggers.com/mapping-with-ggplot-create-a-nice-choropleth-map-in-r/)
+```{r, warning=F,message=F, fig.height=3}
+head(tw_new.df,10)
+```
+
+## Generate Data
+```{r, warning=F,message=F, fig.height=3}
+# Randomly generate some data for plotting
+mydata <- data.frame(NAME_2=tw_new$T_Name, id=tw_new$T_UID,
+                     prevalence=rnorm(length(tw_new$T_UID)))
+head(mydata)
+```
+
+## Chinese Encoding
+```{r, warning=F,message=F, fig.height=3}
+# use iconv to convert
+# from big5 to utf-8
+mydata$NAME_2 <- iconv(as.character(mydata$NAME_2),
+                       from="big5", to="UTF-8")
+head(mydata,10)
+```
+
+## Merge Map and Data
+```{r, warning=F, message=F, fig.height=3}
+final.plot <- merge(tw_new.df, mydata,by="id", all.x=T)
+head(final.plot,10)
+```
+
+## Plotting
+```{r, warning=F, message=F, fig.height=3}
+library(RColorBrewer)
+twcmap <- ggplot() +
+    geom_polygon(data = final.plot, 
+                 aes(x = long, y = lat, group = group, 
+                     fill = prevalence), 
+                 color = "black", size = 0.25) + 
+    coord_map()+
+    scale_fill_gradientn(colours = brewer.pal(9,"Reds"))+
+    theme_void()+
+    labs(title="Prevalence of X in Taiwan")
+```
+
+## Plotting
+```{r, warning=F,message=F, fig.height=5}
+twcmap
+```
+
+## Google map
+- `ggmap` package
+```{r, echo=F, warning=F, message=F, fig.height=5}
+if (!require('ggmap')){
+    install.packages("ggmap")
+    library(ggmap) # for get_map()
+}
+twmap <- get_map(location='Taiwan', zoom=7, language="en-US")
+ggmap(twmap) 
+```
+
+## `ggmap` (import Google map)
+```{r, warning=F, message=F, fig.height=3}
+if (!require('ggmap')){
+    install.packages("ggmap")
+    library(ggmap)
+}
+twmap <- get_map(location='Taiwan', zoom=7, language="en-US")
+# location: name or long/lat
+# zoom: 2-20
+# language: map language
+```
+
+## `ggmap` (plot)
+```{r, warning=F, message=F, fig.height=4}
+ggmap(twmap)
+```
+
+## `ggmap` (maptype)
+```{r, warning=F, message=F, fig.height=3}
+# maptype: "terrain", "terrain-background", "satellite",
+# "roadmap","hybrid" (google maps), "terrain", "watercolor", 
+# "toner" (stamen maps), 
+# or a positive integer for cloudmade maps (see ?get_cloudmademap)
+tpmap <- get_map(location = c(121.43, 24.93, 121.62, 25.19), 
+                     zoom = 14, maptype = 'roadmap')
+ggmap(tpmap, extent = 'device') # extent='device': full screen
+```
+
+## `ggmap` + choropleth
+```{r, warning=F, message=F, fig.height=6}
+ggmap(twmap) + # ggmap
+    geom_polygon(data = final.plot,
+        aes(x = long, y = lat, group = group, fill = prevalence), 
+        color = "grey80", size = 0.1,alpha = 0.5) + 
+  scale_fill_gradientn(colours = brewer.pal(9,"Reds"))
+```
+
+## Density Map - Using `ggplot2` + `ggmap`
+```{r, echo=F, warning=F,message=F}
+# Get location of each state
+StateCenter <- data.frame( 
+    region=tolower(state.name),
+    lon=state.center$x,
+    lat=state.center$y)
+# Population data
+StatePop <- merge(df_pop_state, StateCenter, by="region") 
+# Value to point
+PopPoint <- NULL 
+for(i in 1:nrow(StatePop)){
+    # 1M people -> one point
+    for(j in 1:(StatePop[i, "value"] / 1000000)){
+        PopPoint <- rbind(PopPoint, StatePop[i, ])   
+    }
+}
+
+USMap <- get_map(location = "United States", zoom = 4)
+densityMap <- ggmap(USMap, extent = "device") + 
+  geom_density2d(data = PopPoint, aes(x = lon, y = lat), size = 0.3) +
+  stat_density2d(data = PopPoint, 
+                 aes(x = lon, y = lat, fill = ..level.., alpha = ..level..), 
+                 size = 0.01, bins = 16, geom = "polygon") + 
+  scale_fill_gradient(low = "green", high = "red", guide = FALSE) + 
+  scale_alpha(range = c(0, 0.3), guide = FALSE)
+
+densityMap
+```
+
+## Data Preprocessing
+```{r warning=F, message=F}
+# Get location of each state
+StateCenter <- data.frame( 
+    region=tolower(state.name),
+    lon=state.center$x,
+    lat=state.center$y)
+head(StateCenter, 1)
+# Population data
+StatePop <- merge(df_pop_state, StateCenter, by="region") 
+head(StatePop, 1)
+```
+
+## Data Preprocessing
+```{r warning=F, message=F}
+# Value to point
+PopPoint <- NULL 
+for(i in 1:nrow(StatePop)){
+    # 1M people -> one point
+    for(j in 1:(StatePop[i, "value"] / 1000000)){
+        PopPoint <- rbind(PopPoint, StatePop[i, ])   
+    }
+}
+head(PopPoint, 3)
+```
+
+## Plotting
+```{r warning=F, message=F}
+USMap <- get_map(location = "United States", zoom = 4)
+densityMap <- ggmap(USMap, extent = "device") + 
+  geom_density2d(data = PopPoint, aes(x = lon, y = lat), size = 0.3) +
+  stat_density2d(data = PopPoint, 
+                 aes(x = lon, y = lat, fill = ..level.., alpha = ..level..), 
+                 size = 0.01, bins = 16, geom = "polygon") + 
+  scale_fill_gradient(low = "green", high = "red", guide = FALSE) + 
+  scale_alpha(range = c(0, 0.3), guide = FALSE)
+```
+
+## Density Map
+```{r warning=F, fig.height=5.5}
+densityMap
+```
+
+## `ggmap` Reference
+- [ggmap package source code](https://github.com/dkahle/ggmap)
+- [ggmap cheat sheet](https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/ggmap/ggmapCheatsheet.pdf)
+- [ggmap doc](https://dl.dropboxusercontent.com/u/24648660/ggmap%20useR%202012.pdf)
+
+# Take Home Message
+
+## Grammar
+- Data `ggplot(Data)`
+- Geometries `geom_line()`, `geom_bar()`, `geom_point()`
+- Aesthetic properties `ggplot(Data, aes(x=1, y=1, color='black'))`
+- Scale mappings `scale_fill_continuous()`, `scale_fill_grey()`
+- Stats `stat_density2d()`
+
+## Reference
+- [ggplot2 Cheat Sheet](https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf)
+- Courtesy by Professor Yi-Ju Tseng, Chang Gung University, Taiwan
