@@ -1,0 +1,104 @@
+---
+title: "Deep Learning in R"
+author: "Wei-Hung Weng"
+date: "November 30, 2016"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=T)
+```
+
+## H2O
+
+```{r}
+# install.packages("h2o", type="source", 
+#                  repos=(c("http://h2o-release.s3.amazonaws.com/h2o/rel-turing/3/R")))
+
+suppressMessages(library(h2o))
+
+# initialize h2o
+h2o.init(nthreads=-1, max_mem_size="2G")
+```
+
+```{r eval=FALSE}
+# load your own data
+my_data <- read.table("path_to_my_data")
+my_data <- as.h2o(my_data)
+```
+
+## MNIST
+
+```{r}
+train <- h2o.importFile("https://h2o-public-test-data.s3.amazonaws.com/bigdata/laptop/mnist/train.csv.gz")
+test <- h2o.importFile("https://h2o-public-test-data.s3.amazonaws.com/bigdata/laptop/mnist/test.csv.gz")
+dim(train)
+dim(test)
+
+y <- "C785"
+x <- setdiff(names(train), y)
+train[, y] <- as.factor(train[, y])
+test[, y] <- as.factor(test[, y])
+```
+
+## MNIST
+
+```{r}
+model <- h2o.deeplearning(
+  x = x,
+  y = y,
+  training_frame = train,
+  validation_frame = test,
+  distribution = "multinomial",
+  activation = "RectifierWithDropout",
+  hidden = c(32,32,32),
+  input_dropout_ratio = 0.2,
+  balance_classes = TRUE,
+  sparse = TRUE,
+  l1 = 1e-5,
+  epochs = 10,
+  variable_importances = TRUE)
+```
+
+## MNIST
+
+```{r}
+h2o.varimp(model)
+```
+
+## MNIST
+
+```{r}
+h2o.performance(model) # training metrics 
+```
+
+## MNIST
+
+```{r}
+h2o.performance(model, valid = TRUE) # validation metrics
+```
+
+## MNIST
+
+```{r}
+pred <- h2o.predict(model, newdata=test)
+pred <- as.data.frame(pred)[, 1]
+truth <- as.data.frame(test)[, 785]
+```
+
+## MNIST
+
+```{r}
+suppressMessages(library(caret))
+confusionMatrix(pred, truth)
+```
+
+## Closing H2O Cluster
+
+- [More information about H2O](http://docs.h2o.ai/h2o/latest-stable/index.html)
+- [H2O documentation about deep neural network](http://docs.h2o.ai/h2o-tutorials/latest-stable/tutorials/deeplearning/index.html)
+
+```{r}
+h2o.removeAll()
+```
+

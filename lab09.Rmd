@@ -1,0 +1,242 @@
+---
+title: "Machine Learning in R"
+author: "Wei-Hung Weng"
+date: "November 29, 2016"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=T)
+```
+
+# Supervised Learning
+
+## Preparation
+
+```{r}
+iris$SepalLength5 <- as.factor(ifelse(iris$Sepal.Length > 5, 
+                                      "Yes", "No"))
+
+suppressMessages(library(caret))
+split <- 0.7
+inTraining <- createDataPartition(iris$Species, p=split, 
+                                  list=FALSE)
+training <- iris[inTraining, ]
+testing <- iris[-inTraining, ]
+```
+
+## Regression
+
+- Linear regression - `lm`
+- LASSO, ridge regression, elastic net - `glmnet` 
+
+```{r}
+model <- lm(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width, training)
+#summary(model)
+pred <- predict(model, testing[, 2:4])
+sqrt(mean((pred - testing[, 1])^2)) # RMSE
+```
+
+## Regression
+
+- Logistic regression - `glm`
+
+```{r}
+model <- glm(SepalLength5 ~ Sepal.Width + Petal.Length + Petal.Width, 
+             data=training, family="binomial")
+#summary(model)
+pred <- predict(model, testing[, 2:4], type="response")
+pred <- ifelse(pred >= 0.5, "Yes", "No")
+```
+
+## Regression
+
+```{r}
+confusionMatrix(pred, testing[, 6])
+```
+
+```{r echo=FALSE}
+training$SepalLength5 <- NULL
+testing$SepalLength5 <- NULL
+```
+
+## Decision Tree
+
+- Decision tree - `rpart`
+
+```{r}
+library(rpart)
+model <- rpart(Species ~ ., training, method="class")
+#summary(model)
+pred <- predict(model, testing[, 1:4], type="class")
+confusionMatrix(pred, testing[, 5])
+```
+
+## Decision Tree
+
+- Plot the tree - `rpart.plot`
+
+```{r}
+library(rpart.plot)
+rpart.plot(model)
+```
+
+## Support Vector Machine
+
+- `e1071` package (LIBSVM implementation)
+- Kernel can be `linear`, `polynomial`, `radial`, `sigmoid`
+
+```{r}
+library(e1071)
+model <- svm(Species ~ ., training, kernel="radial", cost=1,
+             gamma=1/length(training), type="C-classification")
+#summary(model)
+pred <- predict(model, testing[, 1:4], type="class")
+confusionMatrix(pred, testing[, 5])
+```
+
+## Support Vector Machine
+
+- [Powerful `caret` package](https://topepo.github.io/caret/available-models.html)
+
+```{r}
+algorithm <- "svmLinear"
+model <- suppressMessages(train(Species ~ ., training, method=algorithm))
+#summary(model)
+pred <- predict(model, testing[, 1:4], type="raw")
+confusionMatrix(pred, testing[, 5])
+```
+
+## Support Vector Machine
+
+- [Powerful `caret` package](https://topepo.github.io/caret/available-models.html)
+
+```{r}
+algorithm <- "svmRadial"
+model <- train(Species ~ ., training, method=algorithm)
+#summary(model)
+pred <- predict(model, testing[, 1:4], type="raw")
+confusionMatrix(pred, testing[, 5])
+```
+
+## Random Forest
+
+- `randomforest` package
+
+```{r}
+suppressMessages(library(randomForest))
+model <- randomForest(Species ~ ., training, ntree=100)
+#summary(model)
+pred <- predict(model, testing[, 1:4], type="response")
+confusionMatrix(pred, testing[, 5])
+```
+
+## Random Forest
+
+- `randomforest` package
+
+```{r}
+plot(model)
+```
+
+## Random Forest
+
+- Or again [powerful `caret` package](https://topepo.github.io/caret/available-models.html)
+
+```{r}
+algorithm <- "rf"
+model <- train(Species ~ ., training, method=algorithm)
+#summary(model)
+pred <- predict(model, testing[, 1:4], type="raw")
+confusionMatrix(pred, testing[, 5])
+```
+
+## (Repeated) Cross-Validation
+
+```{r}
+control <- trainControl(method="repeatedcv", number=5, repeats=3)
+control <- trainControl(method="cv", number=5)
+model <- train(Species ~ ., training, method=algorithm, trControl=control)
+pred <- predict(model, testing[, 1:4], type="raw")
+confusionMatrix(pred, testing[, 5])
+```
+
+## Other Algorithms
+
+- AdaBoost (`adaboost`)
+- Generalized Additive Model using Splines (`gam`)
+- Generalized Linear Model (`glm`)
+- k-Nearest Neighbors (`knn`)
+- Linear Discriminant Analysis (`lda`)
+- Multi-Layer Perceptron (`mlp`)
+- Naive Bayes (`nb`)
+- Neural Network (`nnet`, `neuralnet`)
+- Stochastic Gradient Boosting (`gbm`)
+- ... [233 algorithms](https://topepo.github.io/caret/available-models.html)
+
+# Unsupervised Learning
+
+## k-means Clustering
+
+```{r}
+library(fpc)
+model <- kmeans(training[, 1:4], centers=3, iter.max=1000)
+plotcluster(training[, 1:4], model$cluster)
+```
+
+## k-means Clustering
+
+```{r}
+pred_cluster <- function(x) {
+  dist <- apply(model$centers, 1, function(y) sqrt(sum((x-y)^2)))
+  return(which.min(dist)[1])
+}
+
+pred <- apply(testing[, 1:4], 1, pred_cluster)
+
+for (i in 1:length(pred)) {
+  if (pred[i] == 1) pred[i] <- "setosa"
+  if (pred[i] == 2) pred[i] <- "versicolor"
+  if (pred[i] == 3) pred[i] <- "virginica"
+}
+```
+
+## k-means Clustering
+
+```{r}
+confusionMatrix(pred, testing[, 5])
+```
+
+## Hierarchical Clustering
+
+```{r}
+colorClass <- c(rep("ss", 35), rep("ve", 35), rep("vi", 35))
+colorCodes <- c(ss="#FF0000", ve="#00FF00", vi="#0000FF")
+par(cex=0.5) # font size
+labelCol <- function(x) {
+  if (is.leaf(x)) {
+    label <- attr(x, "label") 
+    code <- substr(label, 1, 1)
+    attr(x, "nodePar") <- list(lab.col=colorCodes[code])
+  }
+  return(x)
+}
+```
+
+## Hierarchical Clustering
+
+```{r}
+hc <- hclust(dist(training[, 1:4], method="euclidian"), method="average")
+plot(dendrapply(as.dendrogram(hc), labelCol))
+```
+
+## PCA
+
+- Linear combinations of the columns of data with maximal variance
+
+```{r}
+library(ggfortify)
+pca <- prcomp(training[, 1:4])
+autoplot(pca, cbind(training[, 1:4], colorClass), 
+         colour = 'colorClass', label=T, shape=F)
+```
